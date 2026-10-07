@@ -127,6 +127,31 @@ Xcode 16+ and existing Screen Recording access; it never requests permission.
 It saves no images or audio. The example measures its own ScreenCaptureKit
 stream, and a pause in animation does not guarantee a gap in its timestamps.
 
+### Portty frame manifests
+
+[Portty's frame recorder](https://github.com/chestso/portty/blob/570cdd6d2ba2abe456b80d7d995e7e6221a5ab36/src/portty_frame_rec.c#L91)
+writes **frames.csv** with **index,timestamp,filename** columns. It works directly
+with capture-check; the extra columns are ignored. After recording stops, use the
+frame rate configured for that recording, for example:
+
+```sh
+capture-check frames.csv --fps 30
+```
+
+Timestamps are seconds since recording started, rounded to milliseconds. At
+30 fps, 33/34 ms intervals can produce a nonzero **over_target_interval** count
+without failing the default limits. That count alone does not prove frame loss.
+
+The clock is sampled before the image read/write attempt. The
+[backend advances the manifest even when saving fails](https://github.com/chestso/portty/blob/570cdd6d2ba2abe456b80d7d995e7e6221a5ab36/src/backend_sdl3.c#L2192),
+so this checks logged cadence, not whether image files were saved or their
+contents changed. Longest-interval indices are timestamp sample positions, not
+Portty's **index** values; elapsed endpoints are relative to the first sample.
+
+Format compatibility was verified against the linked source commit and synthetic
+manifests with capture-check 0.2.0. This example does not use an actual Portty
+recording.
+
 ### Unity and OBS
 
 - [Unity Recorder](https://docs.unity3d.com/Packages/com.unity.recorder@5.1/manual/RecorderWindowRecordingProperties.html)
