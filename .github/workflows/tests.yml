@@ -42,3 +42,24 @@ jobs:
               assert json.loads(result.stdout)["status"] == status, result.stdout
               print(f"{filename}: {status}, exit {code}")
           PY
+
+  macos-example:
+    runs-on: macos-15
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Compile example and run pure timestamp tests (no capture)
+        run: |
+          mkdir -p build/macos-screencapturekit
+          xcrun swiftc -swift-version 5 -warnings-as-errors -target "$(uname -m)-apple-macosx15.0" \
+            examples/macos-screencapturekit/Timing.swift \
+            examples/macos-screencapturekit/CaptureWindow.swift \
+            -o build/macos-screencapturekit/capture-window
+          xcrun swiftc -swift-version 5 -warnings-as-errors -target "$(uname -m)-apple-macosx15.0" \
+            examples/macos-screencapturekit/Timing.swift \
+            examples/macos-screencapturekit/TimingTests.swift \
+            -o build/macos-screencapturekit/timing-tests
+          build/macos-screencapturekit/timing-tests
+          build/macos-screencapturekit/capture-window --help
