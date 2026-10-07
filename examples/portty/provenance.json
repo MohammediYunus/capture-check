@@ -1,0 +1,78 @@
+{
+  "description": "One actual locally recorded Portty manifest with deliberate static holds and 12 scripted text updates. Self-run integration verification, not external adoption or a general performance benchmark.",
+  "recorded_at_utc": "2026-10-07T21:45:27.061399+00:00",
+  "host": {
+    "os": "macOS 26.7",
+    "architecture": "arm64"
+  },
+  "producer": {
+    "repository": "https://github.com/chestso/portty",
+    "recorder_source_commit": "570cdd6d2ba2abe456b80d7d995e7e6221a5ab36",
+    "local_packaging_patch_commit": "7009c0775ba57a925832e0dd2fade7b672bab4e8",
+    "packaging_pull_request": "https://github.com/chestso/portty/pull/9",
+    "packaging_patch_status_at_recording": "unmerged",
+    "recorder_source_changed_by_patch": false,
+    "coffer_version": "0.6.2",
+    "optional_thorvg_enabled": false,
+    "target_fps": 30,
+    "geometry": "50x10",
+    "mode": "demo, without a PTY",
+    "timestamp_event": "monotonic seconds since recorder start, sampled before image read/write and rounded to milliseconds"
+  },
+  "manifest": {
+    "sha256": "d92a360bf6afb0beac83ae4f016c0e1a884521c7f2335bcfe77c31f8d4e0c4c1",
+    "timestamp_count": 314,
+    "duration_seconds": 10.323
+  },
+  "record_script_sha256": "b4b333127171683a9b2748fdce440a8a36ac1bdb391b8a501f9985b2a238b773",
+  "capture_check": {
+    "version": "0.2.0",
+    "exit_code": 0,
+    "report": {
+      "status": "pass",
+      "timestamp_count": 314,
+      "interval_count": 313,
+      "duration_seconds": 10.322999999999999,
+      "observed_cadence_fps": 30.320643223869034,
+      "target_fps": 30.0,
+      "target_interval_ms": 33.333333333333336,
+      "interval_ms": {
+        "median": 32.999999999999915,
+        "p95": 40.99999999999993,
+        "max": 47.000000000000156
+      },
+      "longest_interval": {
+        "start_sample_index": 61,
+        "end_sample_index": 62,
+        "start_elapsed_seconds": 1.968,
+        "end_elapsed_seconds": 2.015
+      },
+      "gaps": {
+        "over_target_interval": 134,
+        "over_two_target_intervals": 0,
+        "over_max_gap_limit": 0
+      },
+      "limits": {
+        "min_rate_ratio": 0.95,
+        "minimum_cadence_fps": 28.5,
+        "max_gap_frames": 2.0,
+        "maximum_gap_ms": 66.66666666666667
+      },
+      "failures": []
+    }
+  },
+  "separate_local_image_audit": {
+    "image_files_included_in_repository": false,
+    "present_and_decodable_files": 314,
+    "decoder": "Pillow 12.3.0",
+    "dimensions": [
+      950,
+      370
+    ],
+    "qoi_headers_and_end_markers_checked": 314,
+    "unique_decoded_images": 13,
+    "adjacent_changed_images": 12,
+    "adjacent_equal_images": 301,
+    "note": "Original images were audited separately. capture-check does not open them. Equal images are intentional holds, not evidence of dropped frames."
+  }
+}

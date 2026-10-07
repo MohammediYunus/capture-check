@@ -2,3 +2,7 @@ include examples/*.csv
 include examples/*.jsonl
 include examples/macos-screencapturekit/*.swift
 include examples/macos-screencapturekit/README.md
+include examples/portty/README.md
+include examples/portty/frames.csv
+include examples/portty/record.script
+include examples/portty/provenance.json

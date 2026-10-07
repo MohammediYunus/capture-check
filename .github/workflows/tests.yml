@@ -33,9 +33,13 @@ jobs:
           import subprocess
 
           examples = pathlib.Path(os.environ["CAPTURE_CHECK_SOURCE"]) / "examples"
-          for filename, status, code in (("steady-60.csv", "pass", 0), ("stall-60.jsonl", "fail", 1)):
+          for filename, fps, status, code in (
+              ("steady-60.csv", "60", "pass", 0),
+              ("stall-60.jsonl", "60", "fail", 1),
+              ("portty/frames.csv", "30", "pass", 0),
+          ):
               result = subprocess.run(
-                  ["capture-check", str(examples / filename), "--fps", "60"],
+                  ["capture-check", str(examples / filename), "--fps", fps],
                   text=True, capture_output=True, check=False,
               )
               assert result.returncode == code, (result.returncode, result.stdout, result.stderr)
