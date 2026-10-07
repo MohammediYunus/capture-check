@@ -148,9 +148,10 @@ so this checks logged cadence, not whether image files were saved or their
 contents changed. Longest-interval indices are timestamp sample positions, not
 Portty's **index** values; elapsed endpoints are relative to the first sample.
 
-Format compatibility was verified against the linked source commit and synthetic
-manifests with capture-check 0.2.0. This example does not use an actual Portty
-recording.
+Try the [real Portty recording example](examples/portty/README.md): an unchanged
+314-row manifest, the exact recording script and provenance. It was checked with
+capture-check 0.2.0 and a separate local image audit. You can analyze the supplied
+CSV without installing Portty, or use a working Portty build to record your own.
 
 ### Unity and OBS
 
@@ -166,9 +167,9 @@ recording.
   carries source-frame timestamps, but exporting those requires a source-specific
   integration. A normal OBS recording is not automatically a compatible log.
 
-The included CSV and JSONL files are synthetic timing fixtures, not recordings
-from either application. They let you learn the output and thresholds before
-instrumenting an actual capture process.
+The **steady-60.csv** and **stall-60.jsonl** files are synthetic timing fixtures,
+not recordings from Unity or OBS. They let you learn the output and thresholds
+before instrumenting an actual capture process.
 
 ## Results and thresholds
 
@@ -254,10 +255,11 @@ input still produces only an invalid status and error message.
 python3 -m unittest discover -s tests -v
 ```
 
-The tests use synthetic timestamps only. They cover steady 30/60 cadence, stalls,
+The unit tests use synthetic timestamps. They cover steady 30/60 cadence, stalls,
 threshold boundaries, percentile calculation, malformed files and invalid clocks.
-CI runs this small test suite and checks the installed command from outside the
-checkout on standard public GitHub-hosted runners. No paid services or tokens
+CI runs this small test suite and checks the installed command against synthetic
+fixtures and the recorded Portty manifest from outside the checkout, on standard
+public GitHub-hosted runners. No paid services or tokens
 are needed.
 
 Bug reports with a minimal synthetic timestamp sample, expected result and Python

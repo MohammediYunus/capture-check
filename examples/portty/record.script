@@ -1,0 +1,32 @@
+wait 1.0
+emit "\e[?25l\e[2J\e[HCapture-check recorder example\r\nWaiting before scripted updates"
+record-start frames 30
+wait 2.0
+emit "\e[2J\e[HCapture-check recorder example\r\nScripted update 01 of 12\r\n#···········"
+wait 0.5
+emit "\e[2J\e[HCapture-check recorder example\r\nScripted update 02 of 12\r\n##··········"
+wait 0.5
+emit "\e[2J\e[HCapture-check recorder example\r\nScripted update 03 of 12\r\n###·········"
+wait 0.5
+emit "\e[2J\e[HCapture-check recorder example\r\nScripted update 04 of 12\r\n####········"
+wait 0.5
+emit "\e[2J\e[HCapture-check recorder example\r\nScripted update 05 of 12\r\n#####·······"
+wait 0.5
+emit "\e[2J\e[HCapture-check recorder example\r\nScripted update 06 of 12\r\n######······"
+wait 0.5
+emit "\e[2J\e[HCapture-check recorder example\r\nScripted update 07 of 12\r\n#######·····"
+wait 0.5
+emit "\e[2J\e[HCapture-check recorder example\r\nScripted update 08 of 12\r\n########····"
+wait 0.5
+emit "\e[2J\e[HCapture-check recorder example\r\nScripted update 09 of 12\r\n#########···"
+wait 0.5
+emit "\e[2J\e[HCapture-check recorder example\r\nScripted update 10 of 12\r\n##########··"
+wait 0.5
+emit "\e[2J\e[HCapture-check recorder example\r\nScripted update 11 of 12\r\n###########·"
+wait 0.5
+emit "\e[2J\e[HCapture-check recorder example\r\nScripted update 12 of 12\r\n############"
+wait 0.5
+wait 2.0
+record-stop
+screendump final.png
+quit
