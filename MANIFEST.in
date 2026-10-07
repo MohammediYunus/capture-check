@@ -1,0 +1,4 @@
+include examples/*.csv
+include examples/*.jsonl
+include examples/macos-screencapturekit/*.swift
+include examples/macos-screencapturekit/README.md
