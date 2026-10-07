@@ -32,7 +32,7 @@ library.
 
 ## Try a stall
 
-The checked-in CSV and JSONL fixtures are synthetic. The steady sample spaces
+These two fixtures are synthetic. The steady sample spaces
 every timestamp 1/60 second apart; the stall sample adds a 200 ms delay before
 the fifth interval completes.
 
@@ -56,6 +56,35 @@ Selected output fields, rounded here for readability:
 The stall sample fails both default limits. Its median interval stays unchanged,
 which is why checking only the median can hide a recording stall. The full JSON
 also includes the chosen limits and failure reasons.
+
+## Export an offline report
+
+Add **--html** to save a visual report alongside the usual JSON output. Try it
+with the real Portty manifest:
+
+```sh
+python3 -m capture_check examples/portty/frames.csv --fps 30 --html report.html
+```
+
+Open **report.html** in a browser. It is a self-contained HTML/SVG file that works
+offline, without JavaScript, libraries or remote services. The command refuses to
+overwrite an existing output file; choose a new path for another report.
+
+The report shows the configured limits and up to ten of the longest intervals,
+with their exact sample positions and elapsed-time endpoints. For large
+logs, the overview keeps the maximum interval in each of at most 600 elapsed-time
+buckets so isolated spikes remain visible. Statistics and threshold counts still
+use every interval; the overview is not a plot of every sample.
+
+Sample positions are one-based positions in the timestamp sequence, and elapsed
+times start at the first sample. They are not CSV line numbers or video seek
+positions. Passing timing limits does not establish smooth playback, saved image
+files or changing image content.
+
+Valid passing and failing logs both produce a report. JSON remains on stdout,
+and the exit code remains 0 when timing limits pass or 1 when they fail.
+An invalid input or an HTML output error returns structured invalid JSON and
+exit code 2. Output directories must already exist.
 
 ## Input
 
@@ -259,8 +288,9 @@ The unit tests use synthetic timestamps. They cover steady 30/60 cadence, stalls
 threshold boundaries, percentile calculation, malformed files and invalid clocks.
 CI runs this small test suite and checks the installed command against synthetic
 fixtures and the recorded Portty manifest from outside the checkout, on standard
-public GitHub-hosted runners. No paid services or tokens
-are needed.
+public GitHub-hosted runners. The installed-command check also verifies offline
+HTML output for passing and failing logs while preserving the JSON result and
+exit code. No paid services or tokens are needed.
 
 Bug reports with a minimal synthetic timestamp sample, expected result and Python
 version are welcome. Please avoid including private recording metadata. For

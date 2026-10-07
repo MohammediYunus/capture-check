@@ -153,9 +153,28 @@ def main(argv=None):
     parser.add_argument("--unit", choices=("seconds", "milliseconds"), default="seconds")
     parser.add_argument("--min-rate-ratio", type=float, default=0.95, help="minimum observed/target cadence ratio (default: 0.95)")
     parser.add_argument("--max-gap-frames", type=float, default=2.0, help="maximum gap as a multiple of the target interval (default: 2)")
+    parser.add_argument("--html", type=Path, help="write an offline HTML report to a new file (existing paths are refused)")
     try:
         args = parser.parse_args(argv)
-        result = analyze(read_timestamps(args.input, args.field, args.unit), args.fps, args.min_rate_ratio, args.max_gap_frames)
+        timestamps = read_timestamps(args.input, args.field, args.unit)
+        result = analyze(timestamps, args.fps, args.min_rate_ratio, args.max_gap_frames)
+        if args.html is not None:
+            from capture_check_report import render_html
+
+            created = False
+            try:
+                document = render_html(timestamps, result, source_name=args.input.name,
+                                       field=args.field, unit=args.unit)
+                with args.html.open("x", encoding="utf-8") as destination:
+                    created = True
+                    destination.write(document)
+            except (OSError, UnicodeError) as error:
+                if created:
+                    try:
+                        args.html.unlink()
+                    except OSError:
+                        pass
+                raise InputError(f"cannot write HTML report: {error}") from None
         exit_code = 0 if result["status"] == "pass" else 1
     except InputError as error:
         result = {"status": "invalid", "error": str(error)}
