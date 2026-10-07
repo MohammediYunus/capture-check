@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "capture-check"
+version = "0.1.0"
+description = "A small source-timestamp cadence checker for capture QA"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Yunus"}]
+dependencies = []
+
+[project.scripts]
+capture-check = "capture_check:main"
+
+[tool.setuptools]
+py-modules = ["capture_check"]
