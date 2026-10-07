@@ -10,9 +10,11 @@ dependencies beyond Python 3.10 or newer.
 
 ## Quick start
 
-Run directly from this checkout, without installing anything:
+Clone the repository and run directly, without installing a package:
 
 ```sh
+git clone https://github.com/MohammediYunus/capture-check.git
+cd capture-check
 python3 -m capture_check examples/steady-60.csv --fps 60
 ```
 
