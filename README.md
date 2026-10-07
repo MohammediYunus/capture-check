@@ -66,7 +66,8 @@ timestamp
 0.033333333
 ```
 
-JSONL requires one object per nonblank line, with a numeric timestamp field:
+JSONL requires one object per nonblank line, with exactly one numeric timestamp
+field at the top level:
 
 ```json
 {"timestamp": 0.0}
@@ -78,7 +79,8 @@ Use one monotonic clock throughout. Values must be finite and strictly
 increasing. Duplicate timestamps are invalid. At least two timestamps are
 required; use a longer sample for a useful assessment. Extra named fields are
 ignored. Blank lines are ignored. JSON strings such as `"0.1"` are not numeric
-timestamps. The filename extension must be .csv or .jsonl.
+timestamps. Repeated timestamp fields are invalid, even if their values match.
+The filename extension must be .csv or .jsonl.
 
 The default field is `timestamp` and the default unit is seconds. To use another
 field or milliseconds:

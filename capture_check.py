@@ -13,6 +13,10 @@ class InputError(ValueError):
     """Input cannot be analyzed reliably."""
 
 
+class _ObjectPairs(list):
+    """Keep JSON object members so repeated timestamp fields are not discarded."""
+
+
 class Parser(argparse.ArgumentParser):
     def error(self, message):
         raise InputError(message)
@@ -38,26 +42,33 @@ def read_timestamps(path, field="timestamp", unit="seconds"):
     try:
         with path.open(encoding="utf-8-sig", newline="") as source:
             if path.suffix.lower() == ".csv":
-                rows = csv.DictReader(source, strict=True)
-                if not rows.fieldnames or rows.fieldnames.count(field) != 1:
+                rows = csv.reader(source, strict=True)
+                header = next((row for row in rows if row), None)
+                if not header or header.count(field) != 1:
                     raise InputError(f"CSV must have exactly one '{field}' header")
+                field_index = header.index(field)
                 for row in rows:
-                    if None in row or any(value is None for value in row.values()):
+                    if not row:
+                        continue
+                    if len(row) != len(header):
                         raise InputError(f"CSV row ending at line {rows.line_num} has the wrong number of fields")
-                    timestamps.append(finite_number(row[field], f"line {rows.line_num}: {field}") * scale)
+                    timestamps.append(finite_number(row[field_index], f"line {rows.line_num}: {field}") * scale)
             elif path.suffix.lower() == ".jsonl":
                 for line_number, line in enumerate(source, 1):
                     if not line.strip():
                         continue
                     try:
-                        row = json.loads(line)
+                        row = json.loads(line, object_pairs_hook=_ObjectPairs)
                     except (ValueError, RecursionError):
                         raise InputError(f"line {line_number} is not valid JSON") from None
-                    if not isinstance(row, dict) or field not in row:
+                    if not isinstance(row, _ObjectPairs):
                         raise InputError(f"line {line_number} must be an object with '{field}'")
-                    if not isinstance(row[field], (int, float)):
+                    values = [value for key, value in row if key == field]
+                    if len(values) != 1:
+                        raise InputError(f"line {line_number} must have exactly one '{field}'")
+                    if not isinstance(values[0], (int, float)):
                         raise InputError(f"line {line_number}: {field} must be a JSON number")
-                    timestamps.append(finite_number(row[field], f"line {line_number}: {field}") * scale)
+                    timestamps.append(finite_number(values[0], f"line {line_number}: {field}") * scale)
             else:
                 raise InputError("input filename must end in .csv or .jsonl")
     except (OSError, UnicodeError, csv.Error) as error:

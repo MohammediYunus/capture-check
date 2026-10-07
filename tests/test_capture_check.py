@@ -89,10 +89,49 @@ class InputAndCliTests(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertAlmostEqual(result["observed_cadence_fps"], 60)
 
+    def test_csv_leading_blank_lines_and_quoted_metadata(self):
+        path = self.fixture('\n\r\ntimestamp,note\r\n0,"line one\n\nline two"\r\n\r\n0.02,last\r\n', ".csv")
+        code, result = self.run_cli(str(path), "--fps", "50")
+        self.assertEqual((code, result["status"]), (0, "pass"))
+        self.assertEqual(result["timestamp_count"], 2)
+
+    def test_csv_errors_keep_physical_line_numbers_after_blanks(self):
+        for content, line in (
+            ('\n\ntimestamp,note\n0,"first\nsecond"\n\ninvalid,last\n', 7),
+            ('\n\ntimestamp,note\n0,"first\nsecond"\n\n0.02\n', 7),
+        ):
+            with self.subTest(content=content):
+                code, result = self.run_cli(str(self.fixture(content, ".csv")), "--fps", "50")
+                self.assertEqual((code, result["status"]), (2, "invalid"))
+                self.assertIn(f"line {line}", result["error"])
+
     def test_jsonl_pass_output(self):
         path = self.fixture('\n{"timestamp": 0, "unused": true}\n{"timestamp": 0.02}\n\n')
         code, result = self.run_cli(str(path), "--fps", "50")
         self.assertEqual((code, result["status"]), (0, "pass"))
+
+    def test_jsonl_repeated_selected_timestamp_is_invalid(self):
+        for field, line in (
+            ("timestamp", '{"timestamp": 1, "timestamp": 0}'),
+            ("timestamp", '{"timestamp": 0, "timestamp": 0}'),
+            ("timestamp", '{"timestamp": 0, "time\\u0073tamp": 0}'),
+            ("clock_ms", '{"clock_ms": 1, "clock_ms": 0}'),
+        ):
+            with self.subTest(field=field, line=line):
+                path = self.fixture(line + '\n' + json.dumps({field: 0.02}) + '\n')
+                code, result = self.run_cli(str(path), "--fps", "50", "--field", field)
+                self.assertEqual((code, result["status"]), (2, "invalid"))
+                self.assertIn(f"line 1 must have exactly one '{field}'", result["error"])
+
+    def test_jsonl_ignored_metadata_does_not_supply_a_timestamp(self):
+        path = self.fixture(
+            '{"timestamp": 0, "metadata": {"timestamp": 4, "timestamp": 5}, "note": 1, "note": 2}\n'
+            '{"timestamp": 0.02, "metadata": [{"timestamp": 9}]}\n'
+        )
+        code, result = self.run_cli(str(path), "--fps", "50")
+        self.assertEqual((code, result["status"]), (0, "pass"))
+        code, result = self.run_cli(str(self.fixture('{"metadata": {"timestamp": 0}}\n')), "--fps", "50")
+        self.assertEqual((code, result["status"]), (2, "invalid"))
 
     def test_threshold_failure_exit_code(self):
         path = self.fixture('{"timestamp": 0}\n{"timestamp": 0.2}\n')
