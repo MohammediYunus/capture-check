@@ -31,8 +31,9 @@ library.
 
 ## Try a stall
 
-The examples are synthetic. The steady sample spaces every timestamp 1/60 second
-apart; the stall sample adds a 200 ms delay before the fifth interval completes.
+The checked-in CSV and JSONL fixtures are synthetic. The steady sample spaces
+every timestamp 1/60 second apart; the stall sample adds a 200 ms delay before
+the fifth interval completes.
 
 ```sh
 python3 -m capture_check examples/steady-60.csv --fps 60
@@ -118,6 +119,13 @@ source arrivals, queue acceptance and encoder output are different events. A
 regular update callback is not evidence that a new source image was captured.
 This project does not currently ship a Unity or OBS exporter.
 
+For a real producer example, the optional
+[macOS ScreenCaptureKit calibration window](examples/macos-screencapturekit/README.md)
+exports presentation timestamps from its own animated window. It needs macOS 15+,
+Xcode 16+ and existing Screen Recording access; it never requests permission.
+It saves no images or audio. The example measures its own ScreenCaptureKit
+stream, and a pause in animation does not guarantee a gap in its timestamps.
+
 ### Unity and OBS
 
 - [Unity Recorder](https://docs.unity3d.com/Packages/com.unity.recorder@5.1/manual/RecorderWindowRecordingProperties.html)
@@ -132,9 +140,9 @@ This project does not currently ship a Unity or OBS exporter.
   carries source-frame timestamps, but exporting those requires a source-specific
   integration. A normal OBS recording is not automatically a compatible log.
 
-The included examples are synthetic timing fixtures, not recordings from either
-application. They let you learn the output and thresholds before instrumenting
-an actual capture process.
+The included CSV and JSONL files are synthetic timing fixtures, not recordings
+from either application. They let you learn the output and thresholds before
+instrumenting an actual capture process.
 
 ## Results and thresholds
 
