@@ -92,6 +92,48 @@ absolute clock values can lose sub-frame precision when represented as floating
 point numbers. Clock resets and merged recordings must be separated before
 analysis. This tool never sorts timestamps to hide invalid ordering.
 
+## Where do timestamps come from?
+
+**Only have an MP4?** This tool cannot recover the original source-frame arrival
+times from it. File frame timestamps describe the stored playback timeline; a
+constant-frame-rate encoder may repeat frames or assign regular timestamps.
+Converting that timeline to CSV does not recover capture events that were never
+logged. [FFprobe](https://ffmpeg.org/ffprobe.html) can inspect the stored timeline,
+but its output is not a substitute for a source capture log.
+
+**Already building a capture pipeline?** Log one timestamp at a precisely defined
+event, such as when a captured source frame is accepted by your recording queue:
+
+1. Read the same monotonic clock for every event.
+2. Buffer the timestamps in memory while recording. Avoid adding a synchronous
+   disk write to every frame, which can disturb the timing you are measuring.
+3. After recording stops, subtract the first timestamp and write a CSV with a
+   `timestamp` header, or JSONL objects with a numeric `timestamp` field.
+4. Run capture-check with the cadence your pipeline was intended to capture.
+
+Record what event the clock represents alongside your data. Render callbacks,
+source arrivals, queue acceptance and encoder output are different events. A
+regular update callback is not evidence that a new source image was captured.
+This project does not currently ship a Unity or OBS exporter.
+
+### Unity and OBS
+
+- [Unity Recorder](https://docs.unity3d.com/Packages/com.unity.recorder@5.1/manual/RecorderWindowRecordingProperties.html)
+  distinguishes Constant timing, which equalizes recorded intervals, from Variable
+  timing. Know the recording mode before interpreting any exported timestamps.
+- [Unity Frame Timing](https://docs.unity3d.com/Manual/frame-timing-manager-get-timing-data.html)
+  reports rendering events. Those measurements need an explicit mapping to the
+  frames your recorder accepted before they can describe capture cadence.
+- [OBS GetStats](https://github.com/obsproject/obs-websocket/blob/master/docs/generated/protocol.md#getstats)
+  exposes aggregate counts, not the per-frame timestamp sequence this CLI needs.
+  The [OBS asynchronous source API](https://docs.obsproject.com/reference-sources)
+  carries source-frame timestamps, but exporting those requires a source-specific
+  integration. A normal OBS recording is not automatically a compatible log.
+
+The included examples are synthetic timing fixtures, not recordings from either
+application. They let you learn the output and thresholds before instrumenting
+an actual capture process.
+
 ## Results and thresholds
 
 Results are JSON on stdout. Exit codes are:
