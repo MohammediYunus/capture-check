@@ -27,6 +27,32 @@ The package is not published to a registry. Local installation uses setuptools
 as a build dependency; direct execution and the tests only use Python's standard
 library.
 
+## Try a stall
+
+The examples are synthetic. The steady sample spaces every timestamp 1/60 second
+apart; the stall sample adds a 200 ms delay before the fifth interval completes.
+
+```sh
+python3 -m capture_check examples/steady-60.csv --fps 60
+python3 -m capture_check examples/stall-60.jsonl --fps 60
+```
+
+Selected output fields, rounded here for readability:
+
+| Report field | Steady sample | Stall sample |
+| --- | --- | --- |
+| status | pass | fail |
+| observed_cadence_fps | 60.00 | 27.27 |
+| interval_ms.median | 16.67 | 16.67 |
+| interval_ms.p95 | 16.67 | 216.67 |
+| interval_ms.max | 16.67 | 216.67 |
+| gaps.over_max_gap_limit | 0 | 1 |
+| Exit code | 0 | 1 |
+
+The stall sample fails both default limits. Its median interval stays unchanged,
+which is why checking only the median can hide a recording stall. The full JSON
+also includes the chosen limits and failure reasons.
+
 ## Input
 
 CSV requires a header and one timestamp per row:
@@ -111,8 +137,9 @@ python3 -m unittest discover -s tests -v
 
 The tests use synthetic timestamps only. They cover steady 30/60 cadence, stalls,
 threshold boundaries, percentile calculation, malformed files and invalid clocks.
-CI runs this small test suite on standard public GitHub-hosted runners. No paid
-services or tokens are needed.
+CI runs this small test suite and checks the installed command from outside the
+checkout on standard public GitHub-hosted runners. No paid services or tokens
+are needed.
 
 Bug reports with a minimal synthetic timestamp sample, expected result and Python
 version are welcome. Please avoid including private recording metadata. For
