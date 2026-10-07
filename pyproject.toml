@@ -16,4 +16,4 @@ dependencies = []
 capture-check = "capture_check:main"
 
 [tool.setuptools]
-py-modules = ["capture_check"]
+py-modules = ["capture_check", "capture_check_report"]

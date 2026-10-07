@@ -31,20 +31,49 @@ jobs:
           import os
           import pathlib
           import subprocess
+          import tempfile
+          from html.parser import HTMLParser
+
+          class ReportHTML(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.tags = set()
+                  self.text = []
+
+              def handle_starttag(self, tag, attrs):
+                  self.tags.add(tag)
+
+              def handle_data(self, data):
+                  self.text.append(data)
 
           examples = pathlib.Path(os.environ["CAPTURE_CHECK_SOURCE"]) / "examples"
-          for filename, fps, status, code in (
-              ("steady-60.csv", "60", "pass", 0),
-              ("stall-60.jsonl", "60", "fail", 1),
-              ("portty/frames.csv", "30", "pass", 0),
-          ):
-              result = subprocess.run(
-                  ["capture-check", str(examples / filename), "--fps", fps],
-                  text=True, capture_output=True, check=False,
-              )
-              assert result.returncode == code, (result.returncode, result.stdout, result.stderr)
-              assert json.loads(result.stdout)["status"] == status, result.stdout
-              print(f"{filename}: {status}, exit {code}")
+          with tempfile.TemporaryDirectory(prefix="capture-check-reports-") as report_dir:
+              for index, (filename, fps, status, code) in enumerate((
+                  ("steady-60.csv", "60", "pass", 0),
+                  ("stall-60.jsonl", "60", "fail", 1),
+                  ("portty/frames.csv", "30", "pass", 0),
+              )):
+                  command = ["capture-check", str(examples / filename), "--fps", fps]
+                  result = subprocess.run(command, text=True, capture_output=True, check=False)
+                  assert result.returncode == code, (result.returncode, result.stdout, result.stderr)
+                  report = json.loads(result.stdout)
+                  assert report["status"] == status, result.stdout
+
+                  output = pathlib.Path(report_dir) / f"report-{index}.html"
+                  html_result = subprocess.run(
+                      [*command, "--html", str(output)],
+                      text=True, capture_output=True, check=False,
+                  )
+                  assert html_result.returncode == code, (html_result.returncode, html_result.stdout, html_result.stderr)
+                  assert json.loads(html_result.stdout) == report, html_result.stdout
+                  document = ReportHTML()
+                  document.feed(output.read_text(encoding="utf-8"))
+                  assert {"html", "title", "svg"} <= document.tags, document.tags
+                  assert "script" not in document.tags, document.tags
+                  text = " ".join(document.text)
+                  assert pathlib.Path(filename).name in text, text
+                  assert str(report["timestamp_count"]) in text, text
+                  print(f"{filename}: {status}, exit {code}, matching JSON and offline HTML")
           PY
 
   macos-example:
