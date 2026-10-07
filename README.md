@@ -3,7 +3,8 @@
 A small command-line tool for checking the timing of captured source frames.
 Give it a CSV or JSONL file containing timestamps from your capture process. It
 reports interval median, p95, maximum, observed cadence and gaps against a target
-frame rate. It exits with a failure status if your chosen limits are exceeded.
+frame rate, and locates the longest interval in your timestamp log. It exits with
+a failure status if your chosen limits are exceeded.
 
 This is a timestamp checker, not a video-quality score. It has no runtime
 dependencies beyond Python 3.10 or newer.
@@ -169,6 +170,45 @@ ceil(0.95 × interval count). Gap counts are strictly above their named limits;
 small floating-point rounding differences at a boundary are ignored. Output
 contains the actual limits used. A short stall can fail the maximum-gap limit
 even when the average cadence passes.
+
+### Locate the longest interval
+
+Every valid report includes **longest_interval**, which locates the interval whose
+duration is reported in **interval_ms.max**. For example, these timestamps:
+
+```csv
+timestamp
+1000
+1000.03125
+1000.3125
+1000.34375
+```
+
+produce this part of the report:
+
+```json
+{
+  "longest_interval": {
+    "start_sample_index": 2,
+    "end_sample_index": 3,
+    "start_elapsed_seconds": 0.03125,
+    "end_elapsed_seconds": 0.3125
+  }
+}
+```
+
+Sample indices are **one-based positions in the timestamp sequence**. They do
+not count the CSV header, blank lines or lines within quoted metadata. They are
+not physical file line numbers or original captured-frame numbers: a producer
+may have omitted frames before exporting its timestamps.
+
+Elapsed endpoints are in seconds relative to the first supplied timestamp,
+including when the input uses milliseconds. They describe the logged event's
+clock, not necessarily positions you can seek to in a video. If multiple
+intervals have exactly the same maximum duration, the first one is reported.
+The threshold rounding tolerance does not affect which interval is the maximum.
+This field is present for passing reports as well as threshold failures; invalid
+input still produces only an invalid status and error message.
 
 ## What this does not prove
 

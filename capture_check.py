@@ -105,6 +105,8 @@ def analyze(timestamps, fps, min_rate_ratio=0.95, max_gap_frames=2.0):
     max_gap = finite_number(target_interval * max_gap_frames, "maximum gap limit")
     observed_rate = finite_number(len(intervals) / duration, "observed cadence")
     sorted_intervals = sorted(intervals)
+    # Locate the actual maximum, keeping the first occurrence of an exact tie.
+    longest_index = intervals.index(sorted_intervals[-1])
     # Nearest-rank percentile: ceil(0.95 * N), with a one-based rank.
     p95 = sorted_intervals[math.ceil(0.95 * len(intervals)) - 1]
     gap_count = sum(exceeds(interval, max_gap) for interval in intervals)
@@ -121,6 +123,12 @@ def analyze(timestamps, fps, min_rate_ratio=0.95, max_gap_frames=2.0):
             "median": finite_number(statistics.median(intervals) * 1000, "median interval in milliseconds"),
             "p95": finite_number(p95 * 1000, "p95 interval in milliseconds"),
             "max": finite_number(sorted_intervals[-1] * 1000, "maximum interval in milliseconds"),
+        },
+        "longest_interval": {
+            "start_sample_index": longest_index + 1,
+            "end_sample_index": longest_index + 2,
+            "start_elapsed_seconds": values[longest_index] - values[0],
+            "end_elapsed_seconds": values[longest_index + 1] - values[0],
         },
         "gaps": {
             "over_target_interval": sum(exceeds(interval, target_interval) for interval in intervals),
