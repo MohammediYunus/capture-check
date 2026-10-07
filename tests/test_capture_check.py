@@ -36,6 +36,58 @@ class CadenceTests(unittest.TestCase):
         self.assertEqual(result["gaps"]["over_max_gap_limit"], 1)
         self.assertAlmostEqual(result["interval_ms"]["max"], 216.6666666667)
 
+    def test_longest_interval_locates_stalls_with_identical_summaries(self):
+        summaries = []
+        for stall_at in (32, 256):
+            times = [i / 32 + (0.25 if i >= stall_at else 0) for i in range(321)]
+            result = analyze(times, 32)
+            self.assertEqual(result.pop("longest_interval"), {
+                "start_sample_index": stall_at,
+                "end_sample_index": stall_at + 1,
+                "start_elapsed_seconds": (stall_at - 1) / 32,
+                "end_elapsed_seconds": stall_at / 32 + 0.25,
+            })
+            self.assertEqual(result["failures"], ["gap_limit_exceeded"])
+            summaries.append(result)
+        self.assertEqual(summaries[0], summaries[1])
+
+    def test_longest_interval_uses_first_exact_tie(self):
+        result = analyze([0, 0.125, 0.375, 0.625], 8)
+        self.assertEqual(result["longest_interval"], {
+            "start_sample_index": 2,
+            "end_sample_index": 3,
+            "start_elapsed_seconds": 0.125,
+            "end_elapsed_seconds": 0.375,
+        })
+
+    def test_longest_interval_does_not_apply_threshold_tolerance(self):
+        result = analyze([0, 0.25, 0.5 + 1e-11], 4, max_gap_frames=1)
+        self.assertEqual(result["status"], "pass")
+        self.assertEqual(result["longest_interval"]["start_sample_index"], 2)
+        self.assertEqual(result["longest_interval"]["end_elapsed_seconds"], 0.5 + 1e-11)
+        self.assertGreater(result["interval_ms"]["max"], 250)
+
+    def test_longest_interval_is_relative_to_first_sample(self):
+        for origin in (0, 1000, -1000):
+            with self.subTest(origin=origin):
+                result = analyze([origin, origin + 0.125, origin + 0.375, origin + 0.5], 8)
+                self.assertEqual(result["longest_interval"], {
+                    "start_sample_index": 2,
+                    "end_sample_index": 3,
+                    "start_elapsed_seconds": 0.125,
+                    "end_elapsed_seconds": 0.375,
+                })
+
+    def test_longest_interval_with_only_two_samples(self):
+        result = analyze([1000, 1000.125], 8)
+        self.assertEqual(result["status"], "pass")
+        self.assertEqual(result["longest_interval"], {
+            "start_sample_index": 1,
+            "end_sample_index": 2,
+            "start_elapsed_seconds": 0.0,
+            "end_elapsed_seconds": 0.125,
+        })
+
     def test_nearest_rank_percentile(self):
         times = [0.0]
         for gap in range(1, 21):
@@ -94,6 +146,27 @@ class InputAndCliTests(unittest.TestCase):
         code, result = self.run_cli(str(path), "--fps", "50")
         self.assertEqual((code, result["status"]), (0, "pass"))
         self.assertEqual(result["timestamp_count"], 2)
+
+    def test_longest_interval_indexes_samples_in_millisecond_csv_and_jsonl(self):
+        csv_content = (
+            '\nclock_ms,note\n1000000,"first\nline"\n\n'
+            '1000031.25,second\n1000312.5,third\n1000343.75,last\n'
+        )
+        jsonl_content = '\n' + '\n\n'.join(
+            json.dumps({"clock_ms": value})
+            for value in (1000000, 1000031.25, 1000312.5, 1000343.75)
+        ) + '\n'
+        for content, suffix in ((csv_content, ".csv"), (jsonl_content, ".jsonl")):
+            with self.subTest(suffix=suffix):
+                code, result = self.run_cli(str(self.fixture(content, suffix)), "--fps", "32",
+                                            "--field", "clock_ms", "--unit", "milliseconds")
+                self.assertEqual((code, result["status"]), (1, "fail"))
+                self.assertEqual(result["longest_interval"], {
+                    "start_sample_index": 2,
+                    "end_sample_index": 3,
+                    "start_elapsed_seconds": 0.03125,
+                    "end_elapsed_seconds": 0.3125,
+                })
 
     def test_csv_errors_keep_physical_line_numbers_after_blanks(self):
         for content, line in (
